@@ -3,6 +3,6 @@
 <rect width="256" height="256" rx="54" fill="#0b1120"/>
 <rect x="25" y="25" width="206" height="206" rx="42" fill="url(#bg)" stroke="#66d9b5" stroke-width="7"/>
 <path d="M88 45v166M168 45v166M45 88h166M45 168h166" stroke="#66d9b555" stroke-width="7"/>
-<path d="M75 183 117 73h22l42 110h-24l-9-26H107l-9 26Zm39-47h28l-14-41Z" fill="#f3f6ff"/>
+<text x="128" y="147" text-anchor="middle" fill="#f3f6ff" font-size="62" font-weight="800" font-family="Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif">数独</text>
 <circle cx="56" cy="56" r="8" fill="#66d9b5"/><circle cx="200" cy="56" r="8" fill="#66d9b5"/><circle cx="56" cy="200" r="8" fill="#66d9b5"/><circle cx="200" cy="200" r="8" fill="#66d9b5"/>
 </svg>
