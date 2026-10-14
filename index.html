@@ -36,7 +36,7 @@ button:active{transform:scale(.97)}
 .cell:nth-child(n+73){border-bottom:0}
 .cell.box-right{border-right:2px solid #8293aa}
 .cell.box-bottom{border-bottom:2px solid #8293aa}
-.cell.related{background:#1b2b40}
+.cell.odd-box{background:#17322f}.cell.related{background:#1b2b40}
 .cell.same-number{background:#25423f;color:#d6fff3}
 .cell.selected{background:#315c58!important;color:white;box-shadow:inset 0 0 0 2px var(--accent);z-index:1}
 .cell.given{color:#f1f4fb;font-weight:850}
@@ -159,7 +159,7 @@ function render(){
  const conflicts=getConflicts(),selVal=selected>=0?puzzle[selected]:0;
  for(let i=0;i<81;i++){
   const b=cells[i],v=puzzle[i],r=Math.floor(i/9),c=i%9,sr=selected>=0?Math.floor(selected/9):-1,sc=selected>=0?selected%9:-1;
-  b.className="cell";if(c===2||c===5)b.classList.add("box-right");if(r===2||r===5)b.classList.add("box-bottom");
+  b.className="cell";if(c===2||c===5)b.classList.add("box-right");if(r===2||r===5)b.classList.add("box-bottom");if((Math.floor(r/3)*3+Math.floor(c/3))%2===0)b.classList.add("odd-box");
   if(selected>=0&&(r===sr||c===sc||(Math.floor(r/3)===Math.floor(sr/3)&&Math.floor(c/3)===Math.floor(sc/3))))b.classList.add("related");
   if(selVal&&v===selVal)b.classList.add("same-number");
   if(i===selected)b.classList.add("selected");
