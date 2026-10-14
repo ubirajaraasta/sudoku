@@ -1,4 +1,4 @@
-const CACHE_NAME = "sudoku-offline-v8";
+const CACHE_NAME = "sudoku-offline-v9";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", event => {
