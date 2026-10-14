@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-<rect width="256" height="256" rx="54" fill="#101827"/>
-<rect x="34" y="34" width="188" height="188" rx="18" fill="#1b2940" stroke="#66d9b5" stroke-width="8"/>
-<path d="M96.7 38v180M159.3 38v180M38 96.7h180M38 159.3h180" stroke="#71849c" stroke-width="6"/>
-<path d="M96.7 38v180M38 96.7h180" stroke="#dce7f3" stroke-width="10"/>
-<g fill="#66d9b5"><circle cx="66" cy="66" r="10"/><circle cx="190" cy="66" r="10"/><circle cx="128" cy="128" r="10"/><circle cx="66" cy="190" r="10"/><circle cx="190" cy="190" r="10"/></g>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#31435d"/><stop offset="1" stop-color="#101827"/></linearGradient></defs>
+<rect width="256" height="256" rx="54" fill="#0b1120"/>
+<rect x="25" y="25" width="206" height="206" rx="42" fill="url(#bg)" stroke="#66d9b5" stroke-width="7"/>
+<path d="M88 45v166M168 45v166M45 88h166M45 168h166" stroke="#66d9b555" stroke-width="7"/>
+<path d="M75 183 117 73h22l42 110h-24l-9-26H107l-9 26Zm39-47h28l-14-41Z" fill="#f3f6ff"/>
+<circle cx="56" cy="56" r="8" fill="#66d9b5"/><circle cx="200" cy="56" r="8" fill="#66d9b5"/><circle cx="56" cy="200" r="8" fill="#66d9b5"/><circle cx="200" cy="200" r="8" fill="#66d9b5"/>
 </svg>
