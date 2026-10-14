@@ -136,12 +136,12 @@ function makePuzzle(level){
 }
 function selectCell(i){if(!started||paused||finished)return;selected=i;render()}
 function enter(n){
- if(!started||paused||finished||selected<0||puzzle[selected])return;
+ if(!started||paused||finished||selected<0||original[selected])return;
  if(noteMode){if(puzzle[selected])return;if(notes[selected].has(n))notes[selected].delete(n);else notes[selected].add(n)}
  else{if(puzzle[selected]&&puzzle[selected]!==n)return;puzzle[selected]=n;notes[selected].clear();if(n!==solution[selected]){mistakes++;$("mistakes").textContent=mistakes}showErrors=false;if(puzzle.every((v,i)=>v===solution[i]))win()}
  render()
 }
-function erase(){if(!started||paused||finished||selected<0||puzzle[selected])return;notes[selected].clear();render()}
+function erase(){if(!started||paused||finished||selected<0||original[selected])return;puzzle[selected]=0;notes[selected].clear();render()}
 function getConflicts(){
  const bad=new Set();
  for(let i=0;i<81;i++)if(puzzle[i])for(let j=i+1;j<81;j++)if(puzzle[j]===puzzle[i]){
