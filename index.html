@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<title>Sudoku — Asta Games</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1120;--panel:#141e31;--panel2:#1b2940;--line:#33445e;--muted:#92a4c2;--text:#f3f6ff;--accent:#66d9b5;--accent2:#3bb794;--bad:#ff7185}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -20%,#243a54 0,#101827 50%,#090e18 100%);font:15px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);display:flex;justify-content:center;padding:20px 14px calc(28px + env(safe-area-inset-bottom))}
+button,select{font:inherit}
+.app{width:min(100%,560px)}
+header{display:flex;align-items:center;justify-content:space-between;margin:2px 0 14px}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:40px;height:40px;border:1px solid #ffffff24;border-radius:13px;background:linear-gradient(145deg,#31435d,#1a273b);display:grid;place-items:center;color:var(--accent);font-weight:900;font-size:18px}
+.eyebrow{font-size:10px;letter-spacing:.17em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-size:26px;line-height:1;margin:3px 0 0;letter-spacing:.08em}
+.top-btn,.primary,.secondary,.key,.tool{border:0;color:var(--text);cursor:pointer;touch-action:manipulation;transition:transform .08s,background .15s}
+button:active{transform:scale(.97)}
+.top-btn{background:var(--panel2);border:1px solid #ffffff12;padding:10px 13px;border-radius:12px;font-weight:700}
+.panel{background:#121c2edb;border:1px solid #ffffff12;border-radius:20px;padding:16px;box-shadow:0 24px 70px #0004}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}
+.stat{background:#1a2639;border-radius:12px;padding:9px 11px;min-width:0}
+.stat-label{font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.stat-value{font-size:18px;font-weight:800;margin-top:1px}
+.game{position:relative}
+.board{display:grid;grid-template-columns:repeat(9,1fr);aspect-ratio:1;border:2px solid #8293aa;border-radius:10px;overflow:hidden;background:#101827;touch-action:manipulation}
+.cell{position:relative;border:0;border-right:1px solid #42516a;border-bottom:1px solid #42516a;padding:0;background:#121c2c;color:#e6edfa;font-size:clamp(17px,5.5vw,27px);font-weight:600;display:grid;place-items:center;cursor:pointer;min-width:0;min-height:0}
+.cell:nth-child(9n){border-right:0}
+.cell:nth-child(n+73){border-bottom:0}
+.cell.box-right{border-right:2px solid #8293aa}
+.cell.box-bottom{border-bottom:2px solid #8293aa}
+.cell.related{background:#1b2b40}
+.cell.same-number{background:#25423f;color:#d6fff3}
+.cell.selected{background:#315c58!important;color:white;box-shadow:inset 0 0 0 2px var(--accent);z-index:1}
+.cell.given{color:#f1f4fb;font-weight:850}
+.cell.conflict,.cell.wrong{color:#ffd8dc;background:#572c3a}
+.notes{position:absolute;inset:2px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);font-size:clamp(7px,2.3vw,11px);line-height:1;color:#8fa4c0;font-weight:500}
+.notes span{display:grid;place-items:center}
+.keypad{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin:12px 0}
+.key{aspect-ratio:1.12;background:#21314a;border:1px solid #ffffff0d;border-radius:10px;color:#d9e5f6;font-size:18px;font-weight:800;padding:0}
+.key:active,.key.active{background:#2f5a54;color:#caffef}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.tool{background:#1b2940;border:1px solid #ffffff0d;border-radius:11px;padding:10px 6px;font-size:12px;font-weight:700;color:#dbe5f4}
+.tool.active{background:#244d48;color:#bff7e4;border-color:#3f9b83}
+.tool:disabled,.key:disabled{opacity:.4;cursor:not-allowed}
+.message{min-height:24px;text-align:center;color:var(--muted);font-size:12px;padding:9px 4px 0}
+.overlay{position:absolute;inset:0;background:#08101bdc;backdrop-filter:blur(5px);border-radius:9px;display:grid;place-items:center;padding:18px;z-index:3}
+.overlay.hidden{display:none}
+.dialog{width:min(100%,330px);background:#19263a;border:1px solid #ffffff20;border-radius:18px;padding:20px;text-align:center;box-shadow:0 18px 55px #0008}
+.dialog-icon{font-size:35px;line-height:1.2;margin-bottom:7px}
+.dialog h2{font-size:22px;margin:0 0 6px}
+.dialog p{font-size:13px;color:#afbdd2;line-height:1.5;margin:0 0 15px}
+.dialog select{width:100%;background:#101827;border:1px solid #45546a;color:white;border-radius:11px;padding:11px;margin:0 0 10px}
+.primary{width:100%;padding:12px;border-radius:11px;background:var(--accent2);color:#071b17;font-weight:900}
+.secondary{width:100%;padding:11px;border-radius:11px;background:#29374d;font-weight:800;margin-top:8px}
+.status{font-size:11px;color:var(--muted);text-align:center;margin-top:13px}
+@media(min-width:520px){body{padding-top:28px}.panel{padding:20px}.key{font-size:21px}.cell{font-size:27px}}
+@media(max-width:360px){.panel{padding:11px}.keypad{gap:4px}.key{border-radius:8px}.tool{font-size:10px;padding:9px 3px}.stat{padding:8px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header>
+  <div class="brand"><div class="mark">9×9</div><div><div class="eyebrow">Asta Games</div><h1>SUDOKU</h1></div></div>
+  <button class="top-btn" id="newTop">＋ Novo</button>
+</header>
+<section class="panel">
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Tempo</div><div class="stat-value" id="time">00:00</div></div>
+    <div class="stat"><div class="stat-label">Erros</div><div class="stat-value" id="mistakes">0</div></div>
+    <div class="stat"><div class="stat-label">Dicas</div><div class="stat-value" id="hints">3</div></div>
+  </div>
+  <div class="game">
+    <div class="board" id="board" role="grid" aria-label="Tabuleiro de Sudoku"></div>
+    <div class="overlay" id="overlay">
+      <div class="dialog">
+        <div class="dialog-icon" id="dialogIcon">🧩</div>
+        <h2 id="dialogTitle">Vamos jogar?</h2>
+        <p id="dialogText">Escolha o nível e complete cada linha, coluna e bloco com os números de 1 a 9.</p>
+        <select id="difficulty" aria-label="Dificuldade">
+          <option value="easy">Fácil</option><option value="medium" selected>Médio</option><option value="hard">Difícil</option>
+        </select>
+        <button class="primary" id="startBtn">Começar partida</button>
+        <button class="secondary" id="resumeBtn" hidden>Continuar</button>
+      </div>
+    </div>
+  </div>
+  <div class="keypad" id="keypad" aria-label="Teclado numérico"></div>
+  <div class="tools">
+    <button class="tool" id="notesBtn">✎ Anotar</button>
+    <button class="tool" id="eraseBtn">⌫ Apagar</button>
+    <button class="tool" id="hintBtn">✦ Dica</button>
+    <button class="tool" id="checkBtn">✓ Conferir</button>
+  </div>
+  <div class="message" id="message">Toque em “Começar partida” para jogar.</div>
+</section>
+<div class="status">Toque em uma casa e escolha um número • As regras ficam no menu do jogo</div>
+</main>
+<script>
+(()=>{
+const boardEl=document.getElementById("board"),overlay=document.getElementById("overlay");
+const $=id=>document.getElementById(id);
+let puzzle=[],solution=[],notes=[],selected=-1,started=false,paused=false,finished=false,noteMode=false,mistakes=0,hints=3,seconds=0,tick=null,showErrors=false,difficulty="medium";
+const cells=[];
+for(let i=0;i<81;i++){const b=document.createElement("button");b.className="cell";b.type="button";b.setAttribute("role","gridcell");b.setAttribute("aria-label","Casa "+(i+1));if(i%9===2||i%9===5)b.classList.add("box-right");if(Math.floor(i/9)===2||Math.floor(i/9)===5)b.classList.add("box-bottom");b.addEventListener("click",()=>selectCell(i));boardEl.appendChild(b);cells.push(b)}
+const keypad=$("keypad");
+for(let n=1;n<=9;n++){const b=document.createElement("button");b.className="key";b.type="button";b.textContent=n;b.setAttribute("aria-label","Número "+n);b.addEventListener("click",()=>enter(n));keypad.appendChild(b)}
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function makeSolution(){
+ const bands=shuffle([0,1,2]),stacks=shuffle([0,1,2]);
+ const rows=bands.flatMap(b=>shuffle([0,1,2]).map(r=>b*3+r));
+ const cols=stacks.flatMap(s=>shuffle([0,1,2]).map(c=>s*3+c));
+ const nums=shuffle([1,2,3,4,5,6,7,8,9]);
+ return rows.flatMap(r=>cols.map(c=>nums[(r*3+Math.floor(r/3)+c)%9]));
+}
+function candidates(a,i){const r=Math.floor(i/9),c=i%9,used=new Set();for(let k=0;k<9;k++){used.add(a[r*9+k]);used.add(a[k*9+c])}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let y=0;y<3;y++)for(let x=0;x<3;x++)used.add(a[(br+y)*9+bc+x]);const out=[];for(let n=1;n<=9;n++)if(!used.has(n))out.push(n);return out}
+function countSolutions(a,limit=2){
+ let count=0;
+ function walk(){
+  if(count>=limit)return;
+  let best=-1,opts=null;
+  for(let i=0;i<81;i++)if(!a[i]){const c=candidates(a,i);if(!c.length)return;if(!opts||c.length<opts.length){best=i;opts=c;if(c.length===1)break}}
+  if(best<0){count++;return}
+  for(const n of opts){a[best]=n;walk();a[best]=0;if(count>=limit)return}
+ }
+ walk();return count
+}
+function makePuzzle(level){
+ solution=makeSolution();puzzle=solution.slice();
+ const targets={easy:39,medium:32,hard:27},target=targets[level];
+ const order=shuffle(Array.from({length:81},(_,i)=>i));let removed=0;
+ for(const i of order){if(81-removed<=target)break;const old=puzzle[i];puzzle[i]=0;if(countSolutions(puzzle.slice(),2)===1)removed++;else puzzle[i]=old}
+ notes=Array.from({length:81},()=>new Set());return removed
+}
+function selectCell(i){if(!started||paused||finished)return;selected=i;render()}
+function enter(n){
+ if(!started||paused||finished||selected<0||puzzle[selected])return;
+ if(noteMode){if(puzzle[selected])return;if(notes[selected].has(n))notes[selected].delete(n);else notes[selected].add(n)}
+ else{if(puzzle[selected]&&puzzle[selected]!==n)return;puzzle[selected]=n;notes[selected].clear();if(n!==solution[selected]){mistakes++;$("mistakes").textContent=mistakes}showErrors=false;if(puzzle.every((v,i)=>v===solution[i]))win()}
+ render()
+}
+function erase(){if(!started||paused||finished||selected<0||puzzle[selected])return;notes[selected].clear();render()}
+function getConflicts(){
+ const bad=new Set();
+ for(let i=0;i<81;i++)if(puzzle[i])for(let j=i+1;j<81;j++)if(puzzle[j]===puzzle[i]){
+  const r=Math.floor(i/9),c=i%9,R=Math.floor(j/9),C=j%9;
+  if(r===R||c===C||(Math.floor(r/3)===Math.floor(R/3)&&Math.floor(c/3)===Math.floor(C/3))){bad.add(i);bad.add(j)}
+ }
+ return bad
+}
+function render(){
+ const conflicts=getConflicts(),selVal=selected>=0?puzzle[selected]:0;
+ for(let i=0;i<81;i++){
+  const b=cells[i],v=puzzle[i],r=Math.floor(i/9),c=i%9,sr=selected>=0?Math.floor(selected/9):-1,sc=selected>=0?selected%9:-1;
+  b.className="cell";if(c===2||c===5)b.classList.add("box-right");if(r===2||r===5)b.classList.add("box-bottom");
+  if(selected>=0&&(r===sr||c===sc||(Math.floor(r/3)===Math.floor(sr/3)&&Math.floor(c/3)===Math.floor(sc/3))))b.classList.add("related");
+  if(selVal&&v===selVal)b.classList.add("same-number");
+  if(i===selected)b.classList.add("selected");
+  if(puzzle[i]&&solution[i]===puzzle[i]&&original[i])b.classList.add("given");
+  if(conflicts.has(i))b.classList.add("conflict");
+  if(showErrors&&v&&v!==solution[i])b.classList.add("wrong");
+  b.innerHTML="";
+  if(v){b.textContent=v;b.setAttribute("aria-label","Linha "+(r+1)+", coluna "+(c+1)+", número "+v)}
+  else if(notes[i].size){const box=document.createElement("span");box.className="notes";for(let n=1;n<=9;n++){const s=document.createElement("span");s.textContent=notes[i].has(n)?n:"";box.appendChild(s)}b.appendChild(box);b.setAttribute("aria-label","Linha "+(r+1)+", coluna "+(c+1)+", anotações "+Array.from(notes[i]).join(", "))}
+  else{b.setAttribute("aria-label","Linha "+(r+1)+", coluna "+(c+1)+", vazia")}
+  b.disabled=!started||paused||finished;
+ }
+}
+let original=[];
+function formatTime(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function startTimer(){clearInterval(tick);tick=setInterval(()=>{if(started&&!paused&&!finished){seconds++;$("time").textContent=formatTime(seconds)}},1000)}
+function newGame(level){
+ difficulty=level;$("startBtn").disabled=true;$("startBtn").textContent="Preparando…";$("dialogText").textContent="Montando um tabuleiro único para você.";
+ setTimeout(()=>{
+  const removed=makePuzzle(difficulty);original=puzzle.slice();selected=-1;mistakes=0;hints=3;seconds=0;showErrors=false;noteMode=false;started=true;paused=false;finished=false;
+  $("mistakes").textContent="0";$("hints").textContent="3";$("time").textContent="00:00";$("notesBtn").classList.remove("active");$("message").textContent="Partida pronta. Boa sorte!";
+  overlay.classList.add("hidden");$("startBtn").disabled=false;$("startBtn").textContent="Começar partida";$("difficulty").value=difficulty;
+  render();startTimer()
+ },30)
+}
+function win(){finished=true;started=false;clearInterval(tick);$("message").textContent="Parabéns! Sudoku resolvido em "+formatTime(seconds)+".";$("dialogIcon").textContent="🏆";$("dialogTitle").textContent="Você conseguiu!";$("dialogText").textContent="Você resolveu o Sudoku em "+formatTime(seconds)+". Quer jogar outra partida?";$("startBtn").textContent="Novo Sudoku";$("startBtn").disabled=false;$("resumeBtn").hidden=true;overlay.classList.remove("hidden")}
+function togglePause(){if(!started||finished)return;paused=!paused;if(paused){$("dialogIcon").textContent="⏸";$("dialogTitle").textContent="Partida pausada";$("dialogText").textContent="Seu tempo está parado. Toque abaixo para continuar."; $("startBtn").hidden=true;$("resumeBtn").hidden=false;overlay.classList.remove("hidden")}else{overlay.classList.add("hidden");$("startBtn").hidden=false;$("resumeBtn").hidden=true}render()}
+function hint(){
+ if(!started||paused||finished||hints<=0)return;
+ let i=selected;if(i<0||puzzle[i])i=puzzle.findIndex((v,k)=>!v&&k>=0);
+ if(i<0)return;selected=i;puzzle[i]=solution[i];notes[i].clear();hints--;$("hints").textContent=hints;
+ if(puzzle.every((v,k)=>v===solution[k]))win();render()
+}
+function check(){
+ if(!started||paused||finished)return;
+ showErrors=true;const wrong=puzzle.reduce((n,v,i)=>n+(v&&v!==solution[i]?1:0),0);
+ $("message").textContent=wrong?wrong+" número(s) incorreto(s) destacado(s).":puzzle.every(Boolean)?"Tudo certo!":"Até agora, tudo certo. Continue preenchendo.";
+ if(puzzle.every((v,i)=>v===solution[i]))win();render()
+}
+$("startBtn").addEventListener("click",()=>{if(finished){$("dialogIcon").textContent="🧩";$("dialogTitle").textContent="Novo Sudoku";$("dialogText").textContent="Escolha o nível e complete cada linha, coluna e bloco com os números de 1 a 9.";$("startBtn").hidden=false;finished=false}newGame($("difficulty").value)});
+$("resumeBtn").addEventListener("click",togglePause);
+$("newTop").addEventListener("click",()=>{if(started&&!paused&&!finished){paused=true;render()}$("dialogIcon").textContent="🧩";$("dialogTitle").textContent="Novo Sudoku";$("dialogText").textContent="Escolha a dificuldade para começar uma nova partida."; $("startBtn").hidden=false;$("resumeBtn").hidden=true;overlay.classList.remove("hidden")});
+$("notesBtn").addEventListener("click",()=>{if(!started||paused||finished)return;noteMode=!noteMode;$("notesBtn").classList.toggle("active",noteMode);$("message").textContent=noteMode?"Modo de anotações ativado.":"Modo de anotações desativado."});
+$("eraseBtn").addEventListener("click",erase);$("hintBtn").addEventListener("click",hint);$("checkBtn").addEventListener("click",check);
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"||e.key.toLowerCase()==="p"){if(started&&!finished)togglePause();return}
+ if(!started||paused||finished)return;
+ if(/^[1-9]$/.test(e.key)){enter(Number(e.key));return}
+ if(e.key==="Backspace"||e.key==="Delete"){erase();return}
+ if(selected<0)return;
+ let r=Math.floor(selected/9),c=selected%9;
+ if(e.key==="ArrowLeft")c=Math.max(0,c-1);else if(e.key==="ArrowRight")c=Math.min(8,c+1);else if(e.key==="ArrowUp")r=Math.max(0,r-1);else if(e.key==="ArrowDown")r=Math.min(8,r+1);else return;
+ e.preventDefault();selected=r*9+c;render()
+});
+original=Array(81).fill(0);notes=Array.from({length:81},()=>new Set());render();
+})();
+</script>
+</body>
+</html>
