@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f3f0e6">
+<title>Space Invaders — Zen Grid</title>
+<style>
+:root{--paper:#f3f0e6;--ink:#171717;--line:#77756d;--soft:#dedbd0}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--paper);color:var(--ink);font:15px system-ui,-apple-system,sans-serif;display:flex;justify-content:center;padding:18px 14px 28px}
+.app{width:min(100%,520px)}header{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px}.eyebrow{font-size:10px;letter-spacing:.2em;text-transform:uppercase}.title{font-family:Georgia,serif;font-size:27px;letter-spacing:.08em;margin:3px 0 0}.new{border:1px solid var(--ink);background:transparent;color:var(--ink);padding:9px 12px;border-radius:6px;font-weight:700}
+.frame{border:2px solid var(--ink);background:#eeeade;padding:12px;box-shadow:4px 4px 0 #b6b3a8}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.stat{border-bottom:1px solid var(--line);padding:5px}.label{font-size:10px;letter-spacing:.13em;text-transform:uppercase}.value{font-family:monospace;font-size:20px;font-weight:800;margin-top:2px}
+.game{position:relative}.screen{display:block;width:100%;height:auto;aspect-ratio:2/3;background:#f8f6ee;border:2px solid var(--ink);image-rendering:pixelated}.overlay{position:absolute;inset:2px;background:#f8f6eeeF;display:grid;place-items:center;text-align:center;padding:18px}.overlay.hidden{display:none}.dialog{max-width:310px}.dialog h2{font-family:Georgia,serif;font-size:25px;margin:0 0 8px}.dialog p{line-height:1.5;margin:0 0 16px}.start,.control{border:2px solid var(--ink);background:var(--ink);color:var(--paper);font-weight:800;border-radius:5px;padding:11px 16px}.help{font:12px monospace;margin-top:12px}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}.control{background:transparent;color:var(--ink);padding:12px 5px;font-size:18px}.control.fire{background:var(--ink);color:var(--paper);font-size:13px;letter-spacing:.08em}.note{text-align:center;font-size:11px;color:#5c5b55;margin-top:11px}
+@media(max-width:360px){body{padding:12px 9px}.frame{padding:9px}.controls{gap:5px}.title{font-size:23px}.control{padding:10px 3px}}
+</style>
+</head>
+<body><main class="app">
+<header><div><div class="eyebrow">Zen Grid · edição e-ink</div><div class="title">SPACE INVADERS</div></div><button class="new" id="new">Novo jogo</button></header>
+<section class="frame"><div class="stats"><div class="stat"><div class="label">Pontos</div><div class="value" id="score">00000</div></div><div class="stat"><div class="label">Recorde</div><div class="value" id="best">00000</div></div><div class="stat"><div class="label">Vidas</div><div class="value" id="lives">♥♥♥</div></div></div>
+<div class="game"><canvas class="screen" id="screen" width="320" height="480"></canvas><div class="overlay" id="overlay"><div class="dialog"><h2 id="heading">Invasores à vista</h2><p id="message">Destrua as formações inimigas e proteja sua base. Uma versão monocromática inspirada nas telas de e‑reader.</p><button class="start" id="start">Começar</button><div class="help">← → mover · espaço atirar</div></div></div></div>
+<div class="controls"><button class="control" data-key="left">←</button><button class="control fire" data-key="fire">ATIRAR</button><button class="control" data-key="right">→</button></div><div class="note">Toque nos controles ou use o teclado</div></section>
+</main>
+<script>
+(()=>{const c=document.querySelector('#screen'),x=c.getContext('2d'),W=c.width,H=c.height;let player,invaders,shots,enemyShots,score,lives,running=false,last=0,enemyTimer=0,dir=1,best=+localStorage.zenSpaceBest||0;const $=id=>document.getElementById(id);$('best').textContent=String(best).padStart(5,'0');
+function reset(){player={x:W/2-16,y:H-42,w:32,h:14,speed:4};invaders=[];for(let r=0;r<4;r++)for(let col=0;col<8;col++)invaders.push({x:32+col*34,y:42+r*25,w:20,h:14,alive:true,phase:r%2});shots=[];enemyShots=[];score=0;lives=3;dir=1;enemyTimer=0;updateStats();draw()}
+function updateStats(){$('score').textContent=String(score).padStart(5,'0');$('best').textContent=String(best).padStart(5,'0');$('lives').textContent='♥'.repeat(lives)+'♡'.repeat(3-lives)}
+function rect(o,fill=true){x.fillStyle=fill?'#171717':'#77756d';x.fillRect(Math.round(o.x),Math.round(o.y),o.w,o.h)}
+function draw(){x.fillStyle='#f8f6ee';x.fillRect(0,0,W,H);x.strokeStyle='#dedbd0';for(let y=20;y<H;y+=20){x.beginPath();x.moveTo(0,y+.5);x.lineTo(W,y+.5);x.stroke()}invaders.forEach((a,i)=>{if(!a.alive)return;rect(a);x.fillStyle='#f8f6ee';x.fillRect(a.x+4,a.y+3,3,3);x.fillRect(a.x+13,a.y+3,3,3);x.fillStyle='#171717';x.fillRect(a.x-3,a.y+11,26,3)});shots.forEach(a=>rect(a));enemyShots.forEach(a=>rect(a));if(player)rect(player);x.fillStyle='#171717';x.fillRect(0,H-12,W,2)}
+function fire(){if(!running)return;shots.push({x:player.x+player.w/2-2,y:player.y-8,w:4,h:10,speed:7})}
+function move(n){if(!running)return;player.x=Math.max(3,Math.min(W-player.w-3,player.x+n*player.speed))}
+function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function end(title,msg){running=false;$('heading').textContent=title;$('message').textContent=msg;$('start').textContent='Jogar novamente';$('overlay').classList.remove('hidden')}
+function step(t){const dt=Math.min(40,t-last);last=t;if(running){shots.forEach(a=>a.y-=a.speed);shots=shots.filter(a=>a.y>-20);enemyTimer+=dt;if(enemyTimer>900){const alive=invaders.filter(a=>a.alive);if(alive.length)enemyShots.push({x:alive[Math.random()*alive.length|0].x+8,y:alive[Math.random()*alive.length|0].y+12,w:4,h:9,speed:3});enemyTimer=0}const alive=invaders.filter(a=>a.alive),minX=Math.min(...alive.map(a=>a.x)),maxX=Math.max(...alive.map(a=>a.x+a.w));if((minX<7&&dir<0)||(maxX>W-7&&dir>0)){dir*=-1;invaders.forEach(a=>a.y+=12)}invaders.forEach(a=>a.x+=dir*.035*dt);enemyShots.forEach(a=>a.y+=a.speed);enemyShots=enemyShots.filter(a=>a.y<H+10);shots.forEach(s=>invaders.forEach(a=>{if(a.alive&&hit(s,a)){a.alive=false;s.y=-30;score+=10;best=Math.max(best,score);updateStats()}}));enemyShots.forEach(s=>{if(hit(s,player)){s.y=H+10;lives--;updateStats();if(!lives)end('Base destruída','Os invasores venceram desta vez.')}});if(!alive.length)end('Área limpa','Você eliminou toda a formação.');draw()}requestAnimationFrame(step)}
+function start(){reset();running=true;$('overlay').classList.add('hidden');$('start').textContent='Começar';requestAnimationFrame(step)}
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')move(-1);if(e.key==='ArrowRight')move(1);if(e.key===' '){e.preventDefault();fire()}if(e.key.toLowerCase()==='p'&&running){running=false;$('heading').textContent='Pausado';$('message').textContent='Pressione Começar para iniciar novamente.';$('overlay').classList.remove('hidden')}});document.querySelectorAll('[data-key]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();if(b.dataset.key==='left')move(-1);if(b.dataset.key==='right')move(1);if(b.dataset.key==='fire')fire()})});$('start').onclick=start;$('new').onclick=start;reset();requestAnimationFrame(step)})();
+</script></body></html>
