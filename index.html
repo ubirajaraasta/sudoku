@@ -110,8 +110,8 @@ const $=id=>document.getElementById(id);
 let puzzle=[],solution=[],notes=[],selected=-1,started=false,paused=false,finished=false,noteMode=false,mistakes=0,hints=3,seconds=0,tick=null,showErrors=false,difficulty="medium";
 const cells=[];
 for(let i=0;i<81;i++){const b=document.createElement("button");b.className="cell";b.type="button";b.setAttribute("role","gridcell");b.setAttribute("aria-label","Casa "+(i+1));if(i%9===2||i%9===5)b.classList.add("box-right");if(Math.floor(i/9)===2||Math.floor(i/9)===5)b.classList.add("box-bottom");b.addEventListener("click",()=>selectCell(i));boardEl.appendChild(b);cells.push(b)}
-const keypad=$("keypad");
-for(let n=1;n<=9;n++){const b=document.createElement("button");b.className="key";b.type="button";b.textContent=n;b.setAttribute("aria-label","Número "+n);b.addEventListener("click",()=>enter(n));keypad.appendChild(b)}
+const keypad=$("keypad"),numberKeys=[];
+for(let n=1;n<=9;n++){const b=document.createElement("button");b.className="key";b.type="button";b.textContent=n;b.setAttribute("aria-label","Número "+n);b.addEventListener("click",()=>enter(n));keypad.appendChild(b);numberKeys.push(b)}
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 function makeSolution(){
  const bands=shuffle([0,1,2]),stacks=shuffle([0,1,2]);
@@ -171,6 +171,11 @@ function render(){
   else if(notes[i].size){const box=document.createElement("span");box.className="notes";for(let n=1;n<=9;n++){const s=document.createElement("span");s.textContent=notes[i].has(n)?n:"";box.appendChild(s)}b.appendChild(box);b.setAttribute("aria-label","Linha "+(r+1)+", coluna "+(c+1)+", anotações "+Array.from(notes[i]).join(", "))}
   else{b.setAttribute("aria-label","Linha "+(r+1)+", coluna "+(c+1)+", vazia")}
   b.disabled=!started||paused||finished;
+ }
+ for(let n=1;n<=9;n++){
+  const boxes=new Set();
+  for(let i=0;i<81;i++)if(puzzle[i]===n){const r=Math.floor(i/9),c=i%9;boxes.add(Math.floor(r/3)*3+Math.floor(c/3))}
+  numberKeys[n-1].hidden=boxes.size===9;
  }
 }
 let original=[];
