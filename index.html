@@ -208,11 +208,11 @@ function hint(){
   const boxValues=Array.from({length:9},(_,k)=>puzzle[(br+Math.floor(k/3))*9+bc+k%3]);
   const boxBlocked=afterCol.filter(v=>boxValues.includes(v));
   const afterBox=afterCol.filter(v=>!boxBlocked.includes(v));
-  const used=(unit,blocked,remaining)=>{
-   if(!blocked.length)return unit+" não elimina nenhum candidato, então continuam possíveis "+fmt(remaining)+".";
-   return unit+" já contém "+fmt(blocked)+"; restam "+fmt(remaining)+".";
+  const explainStep=(label,blocked,remaining)=>{
+   if(!blocked.length)return label+" não elimina candidatos; permanecem possíveis "+fmt(remaining)+".";
+   return label+", "+(blocked.length===1?"já aparece ":"já aparecem ")+fmt(blocked)+"; "+(remaining.length===1?"resta ":"restam ")+fmt(remaining)+".";
   };
-  return "Linha "+r+", coluna "+c+": na linha faltam "+fmt(afterRow)+". Na coluna "+c+", "+used("a coluna",colBlocked,afterCol)+" No quadrante "+box+", "+used("o quadrante",boxBlocked,afterBox)+" Portanto, só pode entrar "+n+".";
+  return "Linha "+r+", coluna "+c+": na linha faltam "+fmt(afterRow)+". "+explainStep("Na coluna "+c,colBlocked,afterCol)+" "+explainStep("No quadrante "+box,boxBlocked,afterBox)+" Portanto, só pode entrar o número "+n+".";
  };
  for(let i=0;i<81&&!move;i++)if(!puzzle[i]){
   const opts=candidates(puzzle,i);
