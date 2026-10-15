@@ -52,6 +52,16 @@ button:active{transform:scale(.97)}
 .keypad{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px;margin:14px auto 11px;max-width:410px;padding:0 2px;overflow:hidden}.key{grid-column:span 2}.key:nth-child(6){grid-column:2 / span 2}.key:nth-child(7){grid-column:4 / span 2}.key:nth-child(8){grid-column:6 / span 2}.key:nth-child(9){grid-column:8 / span 2}
 .key{aspect-ratio:1.55;background:#21314a;border:1px solid #ffffff0d;border-radius:11px;color:#d9e5f6;font-size:21px;font-weight:850;padding:0;min-height:42px;min-width:0;width:92%;justify-self:center;overflow:hidden}
 .key:active,.key.active{background:#2f5a54;color:#caffef}
+.key.number-celebrating{z-index:5;overflow:visible;animation:balloonPop .8s ease-out both}
+.key.number-celebrating::before{content:"";position:absolute;left:50%;top:50%;width:30px;height:36px;border-radius:50% 50% 46% 46%;background:radial-gradient(circle at 35% 28%,#ffffffaa 0 9%,transparent 10%),linear-gradient(145deg,#7bf0ca,#28a887);transform:translate(-50%,-50%) scale(0);pointer-events:none;animation:balloonBurst .8s ease-out both}
+.key.number-celebrating::after{content:"";position:absolute;left:50%;top:73%;width:7px;height:9px;background:#28a887;clip-path:polygon(0 0,100% 0,50% 100%);transform:translateX(-50%) scale(0);pointer-events:none;animation:balloonKnot .8s ease-out both}
+@keyframes balloonPop{0%,100%{transform:scale(1)}30%{transform:scale(1.12);box-shadow:0 0 0 4px #66d9b577,0 0 22px #66d9b5}70%{transform:scale(.97)}}
+@keyframes balloonBurst{0%{transform:translate(-50%,-50%) scale(.08);opacity:0}35%{transform:translate(-50%,-50%) scale(1);opacity:1}72%,100%{transform:translate(-50%,-50%) scale(1.35);opacity:0}}
+@keyframes balloonKnot{0%,45%{opacity:0;transform:translateX(-50%) scale(0)}60%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) scale(.8)}}
+.confetti-burst{position:fixed;left:0;top:0;width:0;height:0;z-index:20;pointer-events:none}
+.confetti-piece{position:absolute;width:6px;height:10px;border-radius:2px;background:var(--confetti);animation:confettiFly .95s cubic-bezier(.15,.75,.25,1) forwards;transform:translate(0,0) rotate(0)}
+@keyframes confettiFly{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--rot)) scale(.7)}}
+@media(prefers-reduced-motion:reduce){.key.number-celebrating,.key.number-celebrating::before,.key.number-celebrating::after,.confetti-piece{animation:none}.key.number-celebrating::before{opacity:0}.confetti-piece{display:none}}
 .tools{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .tool{background:#1b2940;border:1px solid #ffffff0d;border-radius:10px;padding:8px 4px;font-size:10px;font-weight:700;color:#dbe5f4}
 .tool.active{background:#244d48;color:#bff7e4;border-color:#3f9b83}
@@ -113,7 +123,7 @@ button:active{transform:scale(.97)}
 (()=>{
 const boardEl=document.getElementById("board"),overlay=document.getElementById("overlay");
 const $=id=>document.getElementById(id);
-let puzzle=[],solution=[],notes=[],selected=-1,started=false,paused=false,finished=false,noteMode=false,mistakes=0,hints=3,seconds=0,tick=null,showErrors=false,difficulty="medium",hintVisual=null,hintTimer=null;
+let puzzle=[],solution=[],notes=[],selected=-1,started=false,paused=false,finished=false,noteMode=false,mistakes=0,hints=3,seconds=0,tick=null,showErrors=false,difficulty="medium",hintVisual=null,hintTimer=null,numberCompletionState=Array(9).fill(false);
 const cells=[];
 for(let i=0;i<81;i++){const b=document.createElement("button");b.className="cell";b.type="button";b.setAttribute("role","gridcell");b.setAttribute("aria-label","Casa "+(i+1));if(i%9===2||i%9===5)b.classList.add("box-right");if(Math.floor(i/9)===2||Math.floor(i/9)===5)b.classList.add("box-bottom");b.addEventListener("click",()=>selectCell(i));boardEl.appendChild(b);cells.push(b)}
 const keypad=$("keypad"),numberKeys=[];
@@ -169,6 +179,18 @@ function playHintVisual(visual){
  const advance=()=>{if(!hintVisual)return;hintVisual.phase++;if(hintVisual.phase>=hintVisual.steps.length){clearHintVisual();render();return}render();hintTimer=setTimeout(advance,HINT_STEP_MS)};
  hintTimer=setTimeout(advance,HINT_STEP_MS)
 }
+function celebrateNumber(n){
+ const key=numberKeys[n-1],rect=key.getBoundingClientRect();
+ key.hidden=false;key.classList.remove("number-celebrating");void key.offsetWidth;key.classList.add("number-celebrating");
+ const burst=document.createElement("span");burst.className="confetti-burst";burst.style.left=(rect.left+rect.width/2)+"px";burst.style.top=(rect.top+rect.height/2)+"px";
+ const colors=["#66d9b5","#f6cf62","#ff7d8f","#8eb8ff","#ffffff"];
+ for(let i=0;i<18;i++){
+  const piece=document.createElement("span"),angle=(Math.PI*2*i/18)+Math.random()*.25,distance=28+Math.random()*34;
+  piece.className="confetti-piece";piece.style.setProperty("--x",Math.cos(angle)*distance+"px");piece.style.setProperty("--y",Math.sin(angle)*distance+"px");piece.style.setProperty("--rot",(Math.random()*500-250)+"deg");piece.style.setProperty("--confetti",colors[i%colors.length]);burst.appendChild(piece);
+ }
+ document.body.appendChild(burst);
+ setTimeout(()=>{key.classList.remove("number-celebrating");key.hidden=true;burst.remove()},1050);
+}
 function render(){
  const conflicts=getConflicts(),selVal=selected>=0?puzzle[selected]:0;
  for(let i=0;i<81;i++){
@@ -195,7 +217,10 @@ function render(){
  for(let n=1;n<=9;n++){
   const boxes=new Set();
   for(let i=0;i<81;i++)if(puzzle[i]===n){const r=Math.floor(i/9),c=i%9;boxes.add(Math.floor(r/3)*3+Math.floor(c/3))}
-  numberKeys[n-1].hidden=boxes.size===9;
+  const complete=boxes.size===9,key=numberKeys[n-1];
+  if(!complete){numberCompletionState[n-1]=false;key.hidden=false}
+  else if(!numberCompletionState[n-1]){numberCompletionState[n-1]=true;celebrateNumber(n)}
+  else if(!key.classList.contains("number-celebrating"))key.hidden=true;
  }
 }
 let original=[];
@@ -204,7 +229,7 @@ function startTimer(){clearInterval(tick);tick=setInterval(()=>{if(started&&!pau
 function newGame(level){
  clearHintVisual();difficulty=level;$("startBtn").disabled=true;$("startBtn").textContent="Preparando…";$("dialogText").textContent="Montando um tabuleiro único para você.";
  setTimeout(()=>{
-  const removed=makePuzzle(difficulty);original=puzzle.slice();selected=-1;mistakes=0;hints=3;seconds=0;showErrors=false;noteMode=false;started=true;paused=false;finished=false;
+  const removed=makePuzzle(difficulty);numberCompletionState=Array(9).fill(false);numberKeys.forEach(k=>{k.hidden=false;k.classList.remove("number-celebrating")});original=puzzle.slice();selected=-1;mistakes=0;hints=3;seconds=0;showErrors=false;noteMode=false;started=true;paused=false;finished=false;
   $("mistakes").textContent="0";$("hints").textContent="3";$("time").textContent="00:00";$("notesBtn").classList.remove("active");$("message").textContent="Partida pronta. Boa sorte!";
   overlay.classList.add("hidden");$("startBtn").disabled=false;$("startBtn").textContent="Começar partida";$("difficulty").value=difficulty;
   render();startTimer()
