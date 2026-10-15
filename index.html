@@ -41,6 +41,12 @@ button:active{transform:scale(.97)}
 .cell.selected{background:#315c58!important;color:white;box-shadow:inset 0 0 0 2px var(--accent);z-index:1}
 .cell.given{color:#f1f4fb;font-weight:850}
 .cell.conflict,.cell.wrong{color:#ffd8dc;background:#572c3a}
+.board.hint-active .cell:not(.hint-context):not(.hint-blocker):not(.hint-target){opacity:.2;filter:grayscale(.75)}
+.cell.hint-context{opacity:1!important;background:#23453f!important;color:#f2fff9!important;transition:opacity .25s,transform .25s,background .25s}
+.cell.hint-blocker{opacity:1!important;background:#48435a!important;color:#fff8e8!important;outline:2px solid #f0cc74;outline-offset:-3px;z-index:2}
+.cell.hint-target{opacity:1!important;background:var(--accent2)!important;color:#071b17!important;transform:scale(1.1);z-index:4;box-shadow:0 0 0 3px #b3ffe9,0 0 18px #66d9b5;animation:hintPulse .75s ease-in-out infinite alternate}
+@keyframes hintPulse{from{transform:scale(1.06)}to{transform:scale(1.14)}}
+@media(prefers-reduced-motion:reduce){.cell.hint-target{animation:none}.cell.hint-context{transition:none}}
 .notes{position:absolute;inset:2px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);font-size:clamp(7px,2.3vw,11px);line-height:1;color:#8fa4c0;font-weight:500}
 .notes span{display:grid;place-items:center}
 .keypad{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px;margin:14px auto 11px;max-width:410px;padding:0 2px;overflow:hidden}.key{grid-column:span 2}.key:nth-child(6){grid-column:2 / span 2}.key:nth-child(7){grid-column:4 / span 2}.key:nth-child(8){grid-column:6 / span 2}.key:nth-child(9){grid-column:8 / span 2}
@@ -107,7 +113,7 @@ button:active{transform:scale(.97)}
 (()=>{
 const boardEl=document.getElementById("board"),overlay=document.getElementById("overlay");
 const $=id=>document.getElementById(id);
-let puzzle=[],solution=[],notes=[],selected=-1,started=false,paused=false,finished=false,noteMode=false,mistakes=0,hints=3,seconds=0,tick=null,showErrors=false,difficulty="medium";
+let puzzle=[],solution=[],notes=[],selected=-1,started=false,paused=false,finished=false,noteMode=false,mistakes=0,hints=3,seconds=0,tick=null,showErrors=false,difficulty="medium",hintVisual=null,hintTimer=null;
 const cells=[];
 for(let i=0;i<81;i++){const b=document.createElement("button");b.className="cell";b.type="button";b.setAttribute("role","gridcell");b.setAttribute("aria-label","Casa "+(i+1));if(i%9===2||i%9===5)b.classList.add("box-right");if(Math.floor(i/9)===2||Math.floor(i/9)===5)b.classList.add("box-bottom");b.addEventListener("click",()=>selectCell(i));boardEl.appendChild(b);cells.push(b)}
 const keypad=$("keypad"),numberKeys=[];
@@ -139,14 +145,15 @@ function makePuzzle(level){
  for(const i of order){if(81-removed<=target)break;const old=puzzle[i];puzzle[i]=0;if(countSolutions(puzzle.slice(),2)===1)removed++;else puzzle[i]=old}
  notes=Array.from({length:81},()=>new Set());return removed
 }
-function selectCell(i){if(!started||paused||finished)return;selected=i;render()}
+function selectCell(i){if(!started||paused||finished)return;clearHintVisual();selected=i;render()}
 function enter(n){
  if(!started||paused||finished||selected<0||original[selected])return;
+ clearHintVisual();
  if(noteMode){if(puzzle[selected])return;if(notes[selected].has(n))notes[selected].delete(n);else notes[selected].add(n)}
  else{if(puzzle[selected]&&puzzle[selected]!==n)return;puzzle[selected]=n;notes[selected].clear();if(n!==solution[selected]){mistakes++;$("mistakes").textContent=mistakes}showErrors=false;if(puzzle.every((v,i)=>v===solution[i]))win()}
  render()
 }
-function erase(){if(!started||paused||finished||selected<0||original[selected])return;puzzle[selected]=0;notes[selected].clear();render()}
+function erase(){if(!started||paused||finished||selected<0||original[selected])return;clearHintVisual();puzzle[selected]=0;notes[selected].clear();render()}
 function getConflicts(){
  const bad=new Set();
  for(let i=0;i<81;i++)if(puzzle[i])for(let j=i+1;j<81;j++)if(puzzle[j]===puzzle[i]){
@@ -154,6 +161,12 @@ function getConflicts(){
   if(r===R||c===C||(Math.floor(r/3)===Math.floor(R/3)&&Math.floor(c/3)===Math.floor(C/3))){bad.add(i);bad.add(j)}
  }
  return bad
+}
+function clearHintVisual(){clearTimeout(hintTimer);hintTimer=null;hintVisual=null;boardEl.classList.remove("hint-active")}
+function playHintVisual(visual){
+ clearHintVisual();hintVisual={...visual,phase:0};boardEl.classList.add("hint-active");render();
+ const advance=()=>{if(!hintVisual)return;hintVisual.phase++;if(hintVisual.phase>=hintVisual.steps.length){clearHintVisual();render();return}render();hintTimer=setTimeout(advance,900)};
+ hintTimer=setTimeout(advance,900)
 }
 function render(){
  const conflicts=getConflicts(),selVal=selected>=0?puzzle[selected]:0;
@@ -166,6 +179,12 @@ function render(){
   if(puzzle[i]&&solution[i]===puzzle[i]&&original[i])b.classList.add("given");
   if(conflicts.has(i))b.classList.add("conflict");
   if(showErrors&&v&&v!==solution[i])b.classList.add("wrong");
+  if(hintVisual){
+   const step=hintVisual.steps[hintVisual.phase];
+   if(step.cells.includes(i))b.classList.add("hint-context");
+   if(step.blockers.includes(i))b.classList.add("hint-blocker");
+   if(step.target&&hintVisual.target===i)b.classList.add("hint-target");
+  }
   b.innerHTML="";
   if(v){b.textContent=v;b.setAttribute("aria-label","Linha "+(r+1)+", coluna "+(c+1)+", número "+v)}
   else if(notes[i].size){const box=document.createElement("span");box.className="notes";for(let n=1;n<=9;n++){const s=document.createElement("span");s.textContent=notes[i].has(n)?n:"";box.appendChild(s)}b.appendChild(box);b.setAttribute("aria-label","Linha "+(r+1)+", coluna "+(c+1)+", anotações "+Array.from(notes[i]).join(", "))}
@@ -182,7 +201,7 @@ let original=[];
 function formatTime(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
 function startTimer(){clearInterval(tick);tick=setInterval(()=>{if(started&&!paused&&!finished){seconds++;$("time").textContent=formatTime(seconds)}},1000)}
 function newGame(level){
- difficulty=level;$("startBtn").disabled=true;$("startBtn").textContent="Preparando…";$("dialogText").textContent="Montando um tabuleiro único para você.";
+ clearHintVisual();difficulty=level;$("startBtn").disabled=true;$("startBtn").textContent="Preparando…";$("dialogText").textContent="Montando um tabuleiro único para você.";
  setTimeout(()=>{
   const removed=makePuzzle(difficulty);original=puzzle.slice();selected=-1;mistakes=0;hints=3;seconds=0;showErrors=false;noteMode=false;started=true;paused=false;finished=false;
   $("mistakes").textContent="0";$("hints").textContent="3";$("time").textContent="00:00";$("notesBtn").classList.remove("active");$("message").textContent="Partida pronta. Boa sorte!";
@@ -191,9 +210,9 @@ function newGame(level){
  },30)
 }
 function win(){finished=true;started=false;clearInterval(tick);$("message").textContent="Parabéns! Sudoku resolvido em "+formatTime(seconds)+".";$("dialogIcon").textContent="🏆";$("dialogTitle").textContent="Você conseguiu!";$("dialogText").textContent="Você resolveu o Sudoku em "+formatTime(seconds)+". Quer jogar outra partida?";$("startBtn").textContent="Novo Sudoku";$("startBtn").disabled=false;$("resumeBtn").hidden=true;overlay.classList.remove("hidden")}
-function togglePause(){if(!started||finished)return;paused=!paused;if(paused){$("dialogIcon").textContent="⏸";$("dialogTitle").textContent="Partida pausada";$("dialogText").textContent="Seu tempo está parado. Toque abaixo para continuar."; $("startBtn").hidden=true;$("resumeBtn").hidden=false;overlay.classList.remove("hidden")}else{overlay.classList.add("hidden");$("startBtn").hidden=false;$("resumeBtn").hidden=true}render()}
+function togglePause(){if(!started||finished)return;clearHintVisual();paused=!paused;if(paused){$("dialogIcon").textContent="⏸";$("dialogTitle").textContent="Partida pausada";$("dialogText").textContent="Seu tempo está parado. Toque abaixo para continuar."; $("startBtn").hidden=true;$("resumeBtn").hidden=false;overlay.classList.remove("hidden")}else{overlay.classList.add("hidden");$("startBtn").hidden=false;$("resumeBtn").hidden=true}render()}
 function hint(){
- if(!started||paused||finished||hints<=0)return;
+ clearHintVisual();if(!started||paused||finished||hints<=0)return;
  const wrong=puzzle.some((v,i)=>v&&v!==solution[i]);
  if(wrong){$("message").textContent="Corrija primeiro os números destacados; depois posso explicar a próxima jogada.";return}
  let move=null;
