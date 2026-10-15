@@ -197,7 +197,23 @@ function hint(){
  const wrong=puzzle.some((v,i)=>v&&v!==solution[i]);
  if(wrong){$("message").textContent="Corrija primeiro os números destacados; depois posso explicar a próxima jogada.";return}
  let move=null;
- const explainCell=(i,n)=>{const r=Math.floor(i/9)+1,c=i%9+1,b=Math.floor(Math.floor(i/9)/3)*3+Math.floor((i%9)/3)+1;return "Linha "+r+", coluna "+c+": os outros números possíveis já aparecem na linha, na coluna ou no quadrante "+b+". Por isso, só pode entrar o número "+n+"."};
+ const explainCell=(i,n)=>{
+  const row=Math.floor(i/9),col=i%9,r=row+1,c=col+1,box=Math.floor(row/3)*3+Math.floor(col/3)+1;
+  const fmt=a=>a.length?a.join(", "):"nenhum";
+  const values=[1,2,3,4,5,6,7,8,9];
+  const afterRow=values.filter(v=>!puzzle.slice(row*9,row*9+9).includes(v));
+  const colBlocked=afterRow.filter(v=>Array.from({length:9},(_,k)=>puzzle[k*9+col]).includes(v));
+  const afterCol=afterRow.filter(v=>!colBlocked.includes(v));
+  const br=Math.floor(row/3)*3,bc=Math.floor(col/3)*3;
+  const boxValues=Array.from({length:9},(_,k)=>puzzle[(br+Math.floor(k/3))*9+bc+k%3]);
+  const boxBlocked=afterCol.filter(v=>boxValues.includes(v));
+  const afterBox=afterCol.filter(v=>!boxBlocked.includes(v));
+  const used=(unit,blocked,remaining)=>{
+   if(!blocked.length)return unit+" não elimina nenhum candidato, então continuam possíveis "+fmt(remaining)+".";
+   return unit+" já contém "+fmt(blocked)+"; restam "+fmt(remaining)+".";
+  };
+  return "Linha "+r+", coluna "+c+": na linha faltam "+fmt(afterRow)+". Na coluna "+c+", "+used("a coluna",colBlocked,afterCol)+" No quadrante "+box+", "+used("o quadrante",boxBlocked,afterBox)+" Portanto, só pode entrar "+n+".";
+ };
  for(let i=0;i<81&&!move;i++)if(!puzzle[i]){
   const opts=candidates(puzzle,i);
   if(opts.length===1)move={i,n:opts[0],text:explainCell(i,opts[0])};
