@@ -164,9 +164,10 @@ function getConflicts(){
 }
 function clearHintVisual(){clearTimeout(hintTimer);hintTimer=null;hintVisual=null;boardEl.classList.remove("hint-active")}
 function playHintVisual(visual){
+ const HINT_STEP_MS=1400;
  clearHintVisual();hintVisual={...visual,phase:0};boardEl.classList.add("hint-active");render();
- const advance=()=>{if(!hintVisual)return;hintVisual.phase++;if(hintVisual.phase>=hintVisual.steps.length){clearHintVisual();render();return}render();hintTimer=setTimeout(advance,900)};
- hintTimer=setTimeout(advance,900)
+ const advance=()=>{if(!hintVisual)return;hintVisual.phase++;if(hintVisual.phase>=hintVisual.steps.length){clearHintVisual();render();return}render();hintTimer=setTimeout(advance,HINT_STEP_MS)};
+ hintTimer=setTimeout(advance,HINT_STEP_MS)
 }
 function render(){
  const conflicts=getConflicts(),selVal=selected>=0?puzzle[selected]:0;
