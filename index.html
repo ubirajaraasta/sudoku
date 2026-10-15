@@ -233,9 +233,25 @@ function hint(){
   };
   return "Linha "+r+", coluna "+c+": na linha faltam "+fmt(afterRow)+". "+explainStep("Na coluna "+c,colBlocked,afterCol)+" "+explainStep("No quadrante "+box,boxBlocked,afterBox)+" Portanto, só pode entrar o número "+n+".";
  };
+ const buildVisual=(i,unitCells=null)=>{
+  const row=Math.floor(i/9),col=i%9,box=Math.floor(row/3)*3+Math.floor(col/3);
+  if(unitCells)return {target:i,steps:[{cells:unitCells,blockers:unitCells.filter(j=>puzzle[j]!==0)},{cells:[i],blockers:[],target:true}]};
+  const rowCells=Array.from({length:9},(_,k)=>row*9+k),colCells=Array.from({length:9},(_,k)=>k*9+col);
+  const boxCells=Array.from({length:9},(_,k)=>(Math.floor(row/3)*3+Math.floor(k/3))*9+Math.floor(col/3)*3+k%3);
+  const afterRow=[1,2,3,4,5,6,7,8,9].filter(v=>!rowCells.some(j=>puzzle[j]===v));
+  const colBlocked=afterRow.filter(v=>colCells.some(j=>puzzle[j]===v));
+  const afterCol=afterRow.filter(v=>!colBlocked.includes(v));
+  const boxBlocked=afterCol.filter(v=>boxCells.some(j=>puzzle[j]===v));
+  return {target:i,steps:[
+   {cells:rowCells,blockers:rowCells.filter(j=>puzzle[j]!==0)},
+   {cells:colCells,blockers:colCells.filter(j=>colBlocked.includes(puzzle[j])&&puzzle[j]!==0)},
+   {cells:boxCells,blockers:boxCells.filter(j=>boxBlocked.includes(puzzle[j])&&puzzle[j]!==0)},
+   {cells:[i],blockers:[],target:true}
+  ]};
+ };
  for(let i=0;i<81&&!move;i++)if(!puzzle[i]){
   const opts=candidates(puzzle,i);
-  if(opts.length===1)move={i,n:opts[0],text:explainCell(i,opts[0])};
+  if(opts.length===1)move={i,n:opts[0],text:explainCell(i,opts[0]),visual:buildVisual(i)};
  }
  if(!move){
   const units=[];
@@ -246,14 +262,14 @@ function hint(){
    const missing=[1,2,3,4,5,6,7,8,9].filter(n=>!unit.cells.some(i=>puzzle[i]===n));
    for(const n of missing){
     const places=unit.cells.filter(i=>!puzzle[i]&&candidates(puzzle,i).includes(n));
-    if(places.length===1){const i=places[0];move={i,n,text:"Na "+unit.name+", o número "+n+" só pode ocupar a linha "+(Math.floor(i/9)+1)+", coluna "+(i%9+1)+". As outras casas dessa unidade já estão bloqueadas."};break}
+    if(places.length===1){const i=places[0];move={i,n,text:"Na "+unit.name+", o número "+n+" só pode ocupar a linha "+(Math.floor(i/9)+1)+", coluna "+(i%9+1)+". As outras casas dessa unidade já estão bloqueadas.",visual:buildVisual(i,unit.cells)};break}
    }
    if(move)break;
   }
  }
  if(!move){$("message").textContent="Não há uma dedução direta disponível agora. Tente preencher uma casa possível ou use Conferir.";return}
  selected=move.i;puzzle[move.i]=move.n;notes[move.i].clear();hints--;$("hints").textContent=hints;$("message").textContent="Dica: "+move.text;
- if(puzzle.every((v,k)=>v===solution[k]))win();render()
+ if(puzzle.every((v,k)=>v===solution[k]))win();render();if(move.visual)playHintVisual(move.visual)
 }
 function check(){
  if(!started||paused||finished)return;
