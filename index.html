@@ -50,7 +50,7 @@ button:active{transform:scale(.97)}
 .notes{position:absolute;inset:2px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);font-size:clamp(7px,2.3vw,11px);line-height:1;color:#8fa4c0;font-weight:500}
 .notes span{display:grid;place-items:center}
 .keypad{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px;margin:14px auto 11px;max-width:410px;padding:0 2px;overflow:hidden}.key{grid-column:span 2}.key:nth-child(6){grid-column:2 / span 2}.key:nth-child(7){grid-column:4 / span 2}.key:nth-child(8){grid-column:6 / span 2}.key:nth-child(9){grid-column:8 / span 2}
-.key{aspect-ratio:1.55;background:#21314a;border:1px solid #ffffff0d;border-radius:11px;color:#d9e5f6;font-size:21px;font-weight:850;padding:0;min-height:42px;min-width:0;width:92%;justify-self:center;overflow:hidden}
+.key{position:relative;aspect-ratio:1.55;background:#21314a;border:1px solid #ffffff0d;border-radius:11px;color:#d9e5f6;font-size:21px;font-weight:850;padding:0;min-height:42px;min-width:0;width:92%;justify-self:center;overflow:hidden}
 .key:active,.key.active{background:#2f5a54;color:#caffef}
 .key.number-celebrating{z-index:5;overflow:visible;animation:balloonPop .8s ease-out both}
 .key.number-celebrating::before{content:"";position:absolute;left:50%;top:50%;width:30px;height:36px;border-radius:50% 50% 46% 46%;background:radial-gradient(circle at 35% 28%,#ffffffaa 0 9%,transparent 10%),linear-gradient(145deg,#7bf0ca,#28a887);transform:translate(-50%,-50%) scale(0);pointer-events:none;animation:balloonBurst .8s ease-out both}
